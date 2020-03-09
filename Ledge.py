@@ -49,7 +49,7 @@ class LedgeCell:
 
 
 if __name__ == "__main__":
-    B = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
+    B = [1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
     K = 3
     P = 1
 
@@ -65,11 +65,11 @@ if __name__ == "__main__":
     while game:
         actions = board.generate_possible_states()
         if len(actions) != 0:
-            for a in actions:
-                print(a)
-            sleep(0.05)
+            #for a in actions:
+                #print(a)
+            sleep(0.5)
             source, target, coin = board.move_coin(actions[randrange(len(actions))])
-            type = "copper" if coin == 1 else "gold"
+            type = "copper" if coin == 1 else "gold  "
             if source == target:
                 print("Player {} picks up {}:                 {}".format(board.playing.name, type, board.state))
             else:
@@ -80,8 +80,3 @@ if __name__ == "__main__":
             print("Player {} wins!".format(board.playing.name))
         else:
             board.set_playing() # Change player 
-    
-        
-
-
-
