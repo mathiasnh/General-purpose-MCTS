@@ -2,22 +2,32 @@ from TwoPlayerBoard import Player
 from random import randrange
 from time import sleep
 
-class LedgeBoard:
-    def __init__(self, B, player1, player2, P):
+class LedgeGame:
+    def __init__(self, B, p1, p2, P):
         self.state = B
-        self.player1 = player1
-        self.player2 = player2
-        self.playing = self.player1 if P == 1 else self.player2
+        self.p1 = p1
+        self.p2 = p2
+        self.playing = self.p1 if P == 1 else self.p2
 
     def move_coin(self, action):
         s = action['source']
         t = action['target']
         coin = action['coin']
-
+        
         self.state[s] = 0
         if s != t:
             self.state[t] = coin
-
+        self.set_playing() # Change player 
+        """
+        if self.is_terminal_state():
+            game = False
+            print("Player {} wins!".format(self.playing.name))
+        else:
+            self.state[s] = 0
+            if s != t:
+                self.state[t] = coin
+            self.set_playing() # Change player 
+        """
         return s, t, coin
 
     def generate_possible_states(self):
@@ -41,22 +51,21 @@ class LedgeBoard:
         return 2 not in self.state
 
     def set_playing(self):
-        self.playing = self.player2 if self.playing == self.player1 else self.player1
+        self.playing = self.p2 if self.playing == self.p1 else self.p1
 
-class LedgeCell:
-    def __init__(self):
-        pass
+    def reset_game(self, B, P):
+        self.state = B
+        self.playing = self.p1 if P == 1 else self.p2
 
 
 if __name__ == "__main__":
     B = [1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
-    K = 3
     P = 1
 
-    player1 = Player("1")
-    player2 = Player("2")
+    p1 = Player("1")
+    p2 = Player("2")
 
-    board = LedgeBoard(B, player1, player2, P)
+    board = LedgeGame(B, p1, p2, P)
 
     print("Start Board: {}".format(board.state))
 
