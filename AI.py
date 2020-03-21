@@ -111,13 +111,14 @@ class Node:
         self.uct = 0
         self.action = action
 
-
     def is_root(self):
         return self.parent == None
 
     def get_state(self):
-        state_string = str(self.state)
-        return literal_eval(state_string)
+        if isinstance(self.state, list):
+            return self.state[:]
+        else:
+            return self.state
 
     def update_stats(self, result):
         self.visits += 1
@@ -134,13 +135,7 @@ class Node:
             if child.visits == 0:
                 return False
         return self.children != []
-    """
-    def UCT(self, parent, c):
-        q = self.p1_wins if parent.player_to_move.name == "1" else (self.visits-self.p1_wins)
-        self.uct = q / self.visits + c * sqrt(log2(parent.visits) / self.visits)
-        #if self.walkthrough:  print("Node {}: UCT = {} / {} + {} * sqrt(log2({}) / {} = {}".format(self.get_state(), q, self.visits, c, parent.visits, self.visits, self.uct))
-        return self.uct
-    """
+
     def UCT(self, parent, c):
         if parent.player_to_move.name == "2":
             c = -c

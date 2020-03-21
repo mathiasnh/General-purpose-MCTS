@@ -1,6 +1,5 @@
 from TwoPlayerBoard import Player
 from random import randrange
-from time import sleep
 
 class LedgeGame_:
     def __init__(self, B, p1, p2, P):

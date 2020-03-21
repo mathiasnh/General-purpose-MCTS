@@ -5,38 +5,8 @@ from tqdm import tqdm
 from random import choice
 
 import AI
-import Ledge
 import LedgeNoState
 import NIM
-
-class LedgeEnvironment(Environment):
-    def __init__(self, B, p1, p2, P):
-        # Perheps have state here and do moves from the game?
-        self.env = Ledge.LedgeGame(B, p1, p2, P)
-        self.initial_state = B
-        self.starter = P
-
-    def produce_initial_state(self):
-        """ No action for the root node """
-        return None
-
-    def generate_possible_child_states(self):
-        return self.env.generate_possible_states()
-
-    def is_terminal_state(self):
-        return self.env.is_terminal_state()
-
-    def do_action(self, action):
-        source, target, coin = self.env.move_coin(action)
-        type = "copper" if coin == 1 else "gold  "
-        if source == target:
-            result = "Player {} picks up {}:                 {}".format(self.env.playing.name, type, self.env.state)
-        else:
-            result = "Player {} moves {} from cell {} to {}:   {}".format(self.env.playing.name, type, source, target, self.env.state) 
-        return result
-
-    def reset_env(self):
-        self.env.reset_game(self.initial_state, self.starter)
 
 
 class LedgeEnvironmentNoState(Environment):
@@ -116,7 +86,7 @@ def who_starts(p1, p2, P):
 
 if __name__ == "__main__":
     G = 10
-    M = 100
+    M = 500
     P = 1
 
     p1 = Player("1")
@@ -125,7 +95,7 @@ if __name__ == "__main__":
     # LEDGE
     #B = [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 2, 0, 0, 1, 0, 1, 1, 0, 1]
     #B = [1, 1, 1, 1, 0, 2]
-    B = [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 1, 1]
+    B = [0,1,0,1,0,1,0,1,0,1,0,2]
     c = sqrt(2)
 
     # NIM
@@ -134,8 +104,8 @@ if __name__ == "__main__":
 
     verbose = True
     
-    game = LedgeEnvironmentNoState(B, p1, p2, P)
-    #game = NIMEnvironment(N, K, p1, p2, P)
+    #game = LedgeEnvironmentNoState(B, p1, p2, P)
+    game = NIMEnvironment(N, K, p1, p2, P)
 
     mc_learner = AI.Learner(game, c)
 
