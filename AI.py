@@ -2,6 +2,7 @@ from math import sqrt, log, log2
 from random import randrange, choice, seed
 from operator import attrgetter
 from ast import literal_eval
+from copy import copy
 
 class Learner:
     def __init__(self, game, exploration_constant):
@@ -13,7 +14,6 @@ class Learner:
             leaf = self.traverse(root)
             simulation_result = self.rollout(leaf)
             self.backpropogate(leaf, simulation_result)
-
         return self.best_child(root)
 
     ### Traversing
@@ -21,35 +21,43 @@ class Learner:
         while node.is_fully_expanded():
             node = self.best_uct(node)
 
-        if node.children == []:
+        if node.children == [] and self.non_terminal(node):
             self.expand_node(node)
             
-        return self.pick_unvisited(node.children) or node  
+        return self.pick_unvisited(node.children) or node
 
     def best_uct(self, node):
+        """
+        if node.player_to_move.name == "1":
+            best_val = 0
+        else:
+            best_val = 999
+        for c in node.children:
+            if c.visits != 0:
+                if node.player_to_move.name == "1":
+                    #Maximize wins for root-player
+                    val = c.q + self.exploration_constant * sqrt(log2(node.visits) / c.visits)
+                    if val > best_val:
+                        best_val = val
+                        best_child = c
+                else:
+                    #Minimize wins for root-player
+                    val = c.q - self.exploration_constant * sqrt(log2(node.visits) / c.visits)
+                    if val < best_val:
+                        best_val = val
+                        best_child = c
+                    
+        return best_child
+        """
+        #print("From parent {}, player {}".format(node.get_state(), node.player_to_move.name))
         for child in node.children:
             child.UCT(node, self.exploration_constant)
+            #print("Child: {}, UCT: {}".format(child.get_state(), child.uct))
         if node.player_to_move.name == "1":
             uct = max(node.children, key=attrgetter("uct"))
         else:
             uct = min(node.children, key=attrgetter("uct"))
         return choice([n for n in node.children if n.uct == uct.uct])
-        """
-        cmp, u = self.uct_compare(node, node.player_to_move.name == "1", self.exploration_constant)
-        return cmp(node.children, key=u)
-
-    def uct_compare(self, node, maximize, c):
-        def u_plus(child):
-            return child.p1_wins / child.visits + c * sqrt(log2(node.visits) / child.visits)
-        
-        def u_minus(child):
-            return (child.visits - child.p1_wins) / child.visits - c * sqrt(log2(node.visits) / child.visits)
-
-        if maximize:
-            return max, u_plus
-        else:
-            return min, u_minus
-        """
 
     def expand_node(self, node):
         """ Created child nodes for every legal state that can be reached from node """
@@ -64,9 +72,11 @@ class Learner:
 
     ### Rollout 
     def rollout(self, node):
+        checked = False
         while self.non_terminal(node):
+            checked = True
             node = self.rollout_policy(node)
-
+        #input("From {} to {}. Checked = {}".format(node.parent.get_state(), node.get_state(), checked))
         return self.result(node)
     
     def rollout_policy(self, node):
@@ -96,6 +106,15 @@ class Learner:
         else:
             cmp = min(node.children, key=attrgetter("q"))
         return choice([n for n in node.children if n.q == cmp.q])
+        """
+        max = 0 
+        best = node.children[0]
+        for c in node.children:
+            if c.q > max:
+                max = c.q
+                best = c
+        return best
+        """
 
 
 
@@ -115,10 +134,7 @@ class Node:
         return self.parent == None
 
     def get_state(self):
-        if isinstance(self.state, list):
-            return self.state[:]
-        else:
-            return self.state
+        return copy(self.state)
 
     def update_stats(self, result):
         self.visits += 1

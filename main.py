@@ -86,8 +86,9 @@ def who_starts(p1, p2, P):
 
 if __name__ == "__main__":
     G = 10
-    M = 500
+    M = 2000
     P = 1
+    verbose = True
 
     p1 = Player("1")
     p2 = Player("2")
@@ -95,17 +96,15 @@ if __name__ == "__main__":
     # LEDGE
     #B = [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 2, 0, 0, 1, 0, 1, 1, 0, 1]
     #B = [1, 1, 1, 1, 0, 2]
-    B = [0,1,0,1,0,1,0,1,0,1,0,2]
+    B = [0,0,0,0,0,2,0,1,0]
     c = sqrt(2)
 
     # NIM
-    N = 50
-    K = 10
+    N = 9
+    K = 3
 
-    verbose = True
-    
-    #game = LedgeEnvironmentNoState(B, p1, p2, P)
-    game = NIMEnvironment(N, K, p1, p2, P)
+    game = LedgeEnvironmentNoState(B, p1, p2, P)
+    #game = NIMEnvironment(N, K, p1, p2, P)
 
     mc_learner = AI.Learner(game, c)
 
