@@ -1,7 +1,6 @@
-from math import sqrt, log, log2
-from random import randrange, choice, seed
+from math import sqrt, log2
+from random import randrange, choice
 from operator import attrgetter
-from ast import literal_eval
 from copy import copy
 
 class Learner:
@@ -11,48 +10,43 @@ class Learner:
 
     def MCTS(self, root, resources):
         for i in range(resources):
+            # Traverse the tree to find a node that is not fully expanded
             leaf = self.traverse(root)
+
+            # Perform a simulation/rollout on an unvisited leaf node
             simulation_result = self.rollout(leaf)
+
+            # Backpropogate result from leaf node to the root node
             self.backpropogate(leaf, simulation_result)
+
+        # Select the best move based on Q(s,a)
         return self.best_child(root)
 
     ### Traversing
     def traverse(self, node):
+        """ 
+            Traversing the tree using UCT until a not fully expanded node
+            is encountered.
+        """
         while node.is_fully_expanded():
             node = self.best_uct(node)
 
+        # If the node has never been encountered, expand 
         if node.children == [] and self.non_terminal(node):
             self.expand_node(node)
             
+        # Either pick an unvisited child, or the node is terminal 
         return self.pick_unvisited(node.children) or node
 
     def best_uct(self, node):
         """
-        if node.player_to_move.name == "1":
-            best_val = 0
-        else:
-            best_val = 999
-        for c in node.children:
-            if c.visits != 0:
-                if node.player_to_move.name == "1":
-                    #Maximize wins for root-player
-                    val = c.q + self.exploration_constant * sqrt(log2(node.visits) / c.visits)
-                    if val > best_val:
-                        best_val = val
-                        best_child = c
-                else:
-                    #Minimize wins for root-player
-                    val = c.q - self.exploration_constant * sqrt(log2(node.visits) / c.visits)
-                    if val < best_val:
-                        best_val = val
-                        best_child = c
-                    
-        return best_child
+            Returns the child node with best UCT.
+
+            UCT is computed relative to the player who moves from the node.
+            Player 1 aims to maximize UCT, while player 2 aims to minimize it.
         """
-        #print("From parent {}, player {}".format(node.get_state(), node.player_to_move.name))
         for child in node.children:
             child.UCT(node, self.exploration_constant)
-            #print("Child: {}, UCT: {}".format(child.get_state(), child.uct))
         if node.player_to_move.name == "1":
             uct = max(node.children, key=attrgetter("uct"))
         else:
@@ -60,11 +54,17 @@ class Learner:
         return choice([n for n in node.children if n.uct == uct.uct])
 
     def expand_node(self, node):
-        """ Created child nodes for every legal state that can be reached from node """
+        """ 
+            Creates child nodes for every legal state that can be reached 
+            from node 
+        """
         for data in self.game.generate_possible_child_states(node):
             node.add_child(Node(data["state"], data["player"], node, data["result"]))
 
     def pick_unvisited(self, children):
+        """
+            Picks a random unvisited child to do rollout on.
+        """
         if children == []:
             return False
         unvisited = [node for node in children if node.visits == 0]
@@ -72,15 +72,20 @@ class Learner:
 
     ### Rollout 
     def rollout(self, node):
-        checked = False
+        """
+            Simulation: a game is played out from node. Actions are chosen 
+            based on the rollout policy. 
+
+            Returns 1 if player 1 wins, 0 if player 2 wins
+        """
         while self.non_terminal(node):
-            checked = True
             node = self.rollout_policy(node)
-        #input("From {} to {}. Checked = {}".format(node.parent.get_state(), node.get_state(), checked))
         return self.result(node)
     
     def rollout_policy(self, node):
-        """ Pick random state and add it as child node """
+        """ 
+            Pick random state and add it as a child of node
+        """
         possible_states = self.game.generate_possible_child_states(node)
         data = choice(possible_states)
         return Node(data["state"], data["player"], node, data["result"])
@@ -93,6 +98,11 @@ class Learner:
 
     ### Backprop
     def backpropogate(self, node, result):
+        """
+            Backpropogate the result from the rollout from leaf node 
+            to root node, updating the statistics of each node on the 
+            path.
+        """
         node.update_stats(result)
         if node.is_root():
             return
@@ -100,22 +110,15 @@ class Learner:
 
     ### End
     def best_child(self, node):
-        """ Returns the child with the highest number of visits """
+        """ 
+            Returns the child with the best Q(s,a) relative to the
+            player moving from node.
+        """
         if node.player_to_move.name == "1":
             cmp = max(node.children, key=attrgetter("q"))
         else:
             cmp = min(node.children, key=attrgetter("q"))
         return choice([n for n in node.children if n.q == cmp.q])
-        """
-        max = 0 
-        best = node.children[0]
-        for c in node.children:
-            if c.q > max:
-                max = c.q
-                best = c
-        return best
-        """
-
 
 
 class Node:
@@ -146,19 +149,30 @@ class Node:
         self.children.append(child_node)
 
     def is_fully_expanded(self):
-        """ Returns True if all of node's children have been visited """
+        """ 
+            Returns True if all of node's children have been visited 
+        """
         for child in self.children:
             if child.visits == 0:
                 return False
         return self.children != []
 
     def UCT(self, parent, c):
+        """
+            Core function of Monte Carlo Tree Search 
+
+            Calculate Upper Confidence Bound relative to player that 
+            moves from this node
+        """
         if parent.player_to_move.name == "2":
             c = -c
         self.uct = self.q + c * sqrt(log2(parent.visits) / self.visits)
         return self.uct
 
     def reset(self):
+        """
+            Set current node to root of tree
+        """
         self.parent = None
         self.p1_wins = 0
         self.visits = 0

@@ -5,15 +5,13 @@ from tqdm import tqdm
 from random import choice
 
 import AI
-import LedgeNoState
+import Ledge
 import NIM
 
 
-class LedgeEnvironmentNoState(Environment):
-    """ Attempt with no state in game file """
+class LedgeEnvironment(Environment):
     def __init__(self, B, p1, p2, P):
-        # Perheps have state here and do moves from the game?
-        self.env = LedgeNoState.LedgeGame_(B, p1, p2, P)
+        self.env = Ledge.LedgeGame(B, p1, p2, P)
         self.initial_state = B
         self.starter = P
         self.p1 = p1
@@ -23,6 +21,10 @@ class LedgeEnvironmentNoState(Environment):
         return self.initial_state
 
     def generate_possible_child_states(self, node):
+        """ 
+            Gets all legal actions for current state, simulates the actions 
+            on the state and returns all possible next states
+        """
         child_states = []
         actions = self.env.generate_possible_actions(node.get_state())
         for a in actions:
@@ -59,6 +61,10 @@ class NIMEnvironment(Environment):
         return self.initial_state
 
     def generate_possible_child_states(self, node):
+        """ 
+            Gets all legal actions for current state, simulates the actions 
+            on the state and returns all possible next states
+        """
         child_states = []
         actions = self.env.generate_possible_actions(node.get_state())
         for a in actions:
@@ -86,7 +92,7 @@ def who_starts(p1, p2, P):
 
 if __name__ == "__main__":
     G = 10
-    M = 2000
+    M = 4000
     P = 1
     verbose = True
 
@@ -94,36 +100,38 @@ if __name__ == "__main__":
     p2 = Player("2")
 
     # LEDGE
-    #B = [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 2, 0, 0, 1, 0, 1, 1, 0, 1]
     #B = [1, 1, 1, 1, 0, 2]
-    B = [0,0,0,0,0,2,0,1,0]
+    B = [0,0,0,0,2,0,1,0]
     c = sqrt(2)
 
     # NIM
-    N = 9
+    N = 10
     K = 3
 
-    game = LedgeEnvironmentNoState(B, p1, p2, P)
-    #game = NIMEnvironment(N, K, p1, p2, P)
+    #game = LedgeEnvironment(B, p1, p2, P)
+    game = NIMEnvironment(N, K, p1, p2, P)
 
     mc_learner = AI.Learner(game, c)
-
-
-    # Monte Carlo Tree Search:
 
     p1_wins = 0
 
     for i in tqdm(range(G)):
         starter = who_starts(p1, p2, P)
-        print("Player {} starts".format(starter.name))
         root = AI.Node(game.produce_initial_state(), starter, None, None)
-        if verbose: print("Start board: {}".format(root.get_state()))
+
+        if verbose:
+            print("Start board: {}. Player {} starts".format(root.get_state(), starter.name))
+        
         while mc_learner.non_terminal(root):
+            # Find the best move using MCTS
             root = mc_learner.MCTS(root, M)
+
             if verbose:
                 print(root.action)
+
             winner = root.parent.player_to_move.name
             root.reset()
         p1_wins += 1 if winner == "1" else 0
+    
     print("Player 1 won {} out of {} games ({}%)".format(p1_wins, G, p1_wins/G*100))    
 
